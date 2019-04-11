@@ -118,23 +118,15 @@ int main(int argc, const char * argv[]) {
 		exit(FILE_ERROR);  
 	}
 
-	FILE* fback = fopen("BACKING_STORE.bin", "rb");
-	if(fback == NULL)
-	{
-		fprintf(stderr, "Could not open file: 'BACKING_STORE.bin'\n");
-		exit(FILE_ERROR);
-	}	
-
-    int back; // Store file descriptor.
-	char* back_data; // Store file data.
+    int back; 
+	char* back_data;
 	back = open("BACKING_STORE.bin", O_RDONLY);
 	back_data = mmap(0, MEMORY_SIZE, PROT_READ, MAP_SHARED, back, 0);
-	if (back_data == MAP_FAILED) {
+	if(back_data == MAP_FAILED) {
 		close(back);
 		printf("Error mmapping BACKING_STORE.bin!");
 		exit(EXIT_FAILURE);
 	}
-
 
 	char buf[BUFLEN];
 	unsigned int page, offset, physical_address_temp, frame = 0;
@@ -151,7 +143,6 @@ int main(int argc, const char * argv[]) {
 
 		if (frame != -1) {	// TLB Search successful
 		    physical_address_temp = frame + offset;
-
 		    value = phys_memory[physical_address_temp];
 		}
 		else {	// TLB search unsuccessful, trying page table
@@ -159,9 +150,7 @@ int main(int argc, const char * argv[]) {
 
 		    if (frame != -1) {	// Page table search successful
 		        physical_address_temp = frame + offset;
-
 		        update_TLB(page, frame);
-
             	value = phys_memory[physical_address_temp];
 	        }
 	        else {		// Page table search unsuccessful, page fault
