@@ -22,7 +22,7 @@
 #define MEMORY_SIZE (FRAME_ENTRIES * FRAME_SIZE)
 
 int page_table[PAGE_ENTRIES];
-int TLB[MAX_TLB_ENTRIES][2];
+int TLB[MAX_TLB_ENTRIES][3];
 int num_of_page_faults = 0;
 int num_of_TLB_hits = 0;
 int num_of_addresses = 0;
@@ -55,6 +55,7 @@ void init_TLB(int num)	{
 	for(int i = 0; i < MAX_TLB_ENTRIES; i++) {
 		TLB[i][0] = -1;
 		TLB[i][1] = -1;
+		TLB[i][2] = 0;
     }
 }
 
@@ -88,6 +89,7 @@ void update_TLB(int page_num, int frame_num)	{
 
 		TLB[TLB_pointer_back][0] = page_num;
 		TLB[TLB_pointer_back][1] = frame_num;
+		TLB[TLB_pointer_back][2]++;
 	}
 	else {
 		TLB_pointer_front = (TLB_pointer_front + 1) % MAX_TLB_ENTRIES;
@@ -154,9 +156,6 @@ int main(int argc, const char * argv[]) {
             	value = phys_memory[physical_address_temp];
 	        }
 	        else {		// Page table search unsuccessful, page fault
-				fseek(fback, page * 256, SEEK_SET);
-				fread(buf, sizeof(char), 256, fback);
-
                 int page_address = page * PAGE_SIZE;
 
                 if (memory_index != -1) {
@@ -169,17 +168,29 @@ int main(int argc, const char * argv[]) {
                     page_table[page] = memory_index;
                     update_TLB(page, frame);
 
+					//FIFO technique for memory replacement
                     if (memory_index < MEMORY_SIZE - FRAME_SIZE) {
                         memory_index += FRAME_SIZE;
                     }
                     else {
                         memory_index = -1;
                     }
-                }
-				num_of_page_faults++;
+                } 
+
+				// LRU replacement
+				/*int minimum = TLB[0][2];
+				for(int i = 1; i < MAX_TLB_ENTRIES; i++) 	{
+					if(TLB[i][2] < minimum)	{
+						minimum = TLB[i][2];
+					}
+				}
+				memory_index = minimum;*/
 				frame++;
             }
         }
+		fscanf(fcorr, "%s %s %d %s %s %d %s %d", buf, buf, &virt_address,
+        	buf, buf, &phys_address, buf, &value);  // read from file correct.txt
+    	assert(physical_address_temp == phys_address);
     	printf("Virtual address: %5u Physical address: %5u Value: %d\n", logic_address, physical_address_temp, value);
 	}
 	fclose(fcorr);
